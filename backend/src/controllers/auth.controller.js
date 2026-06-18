@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import User from "../models/user.js";
 import { sendWelcomeEmail } from "../emails/emailHandler.js";
 import 'dotenv/config';
-import cloudinary from "../lib/cloundinary.js";
+import cloudinary from "../lib/cloudinary.js";
 
 export const signup = async (req, res) => {
     const { username, email, password } = req.body;
@@ -95,18 +95,44 @@ export const updateProfile = async (req, res) => {
         const { profilePicture } = req.body;
         if(!profilePicture) {
             return res.status(400).json({ message: "Profile picture is required" });
-        } 
+        }
+
+        // Kiểm tra định dạng base64 hợp lệ
+        const validFormats = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+        const matches = profilePicture.match(/^data:(.+);base64,/);
+        if(!matches || !validFormats.includes(matches[1])) {
+            return res.status(400).json({ message: "Only JPEG, PNG, WEBP, GIF are allowed" });
+        }
+
+        // Kiểm tra kích thước (base64 ~1.37x so với file gốc)
+        const base64Data = profilePicture.split(",")[1];
+        const fileSizeInBytes = (base64Data.length * 3) / 4;
+        const fileSizeInMB = fileSizeInBytes / (1024 * 1024);
+        const MAX_SIZE_MB = 5;
+
+        if(fileSizeInMB > MAX_SIZE_MB) {
+            return res.status(400).json({ message: `File size must be less than ${MAX_SIZE_MB}MB` });
+        }
+
         const userId = req.user._id;
-        const upload = await cloudinary.uploader.upload(profilePicture);
+        const upload = await cloudinary.uploader.upload(profilePicture, {
+            resource_type: "image",
+            allowed_formats: ["jpg", "jpeg", "png", "webp", "gif"],
+            transformation: [
+                { width: 500, height: 500, crop: "limit" }, 
+                { quality: "auto" }                         
+            ]
+        });
+
         const updatedUser = await User.findByIdAndUpdate(
             userId, 
             { profilePicture: upload.secure_url }, 
             { new: true }
-        ).select("-password"); // not get password in response
+        ).select("-password");
+
         res.status(200).json(updatedUser);
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: "Internal server error" });
     }
-
 }
