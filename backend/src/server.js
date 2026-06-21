@@ -6,9 +6,8 @@ import path from 'path';
 import cookieParser from 'cookie-parser';
 import cors from "cors";
 import { connectDB } from './lib/db.js';
-import cloudinary from './lib/cloudinary.js';
+import { app, server } from './lib/socket.js';
 dotenv.config();
-const app = express();
 const __dirname = path.resolve();
 const PORT = process.env.PORT;
 app.use(express.json({ limit: "10mb" })); // use req.body
@@ -27,7 +26,7 @@ if(process.env.NODE_ENV === "production"){
     })
 }
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
     connectDB();
 });

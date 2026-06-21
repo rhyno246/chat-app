@@ -20,7 +20,7 @@ function ContactList() {
           onClick={() => setSelectedUser(contact)}
         >
           <div className="flex items-center gap-3">
-            <div className={`avatar`}>
+            <div className={` avatar ${onlineUsers.includes(contact._id) ? "avatar-online" : "avatar-offline"}`}>
               <div className="size-12 rounded-full">
                 <img src={contact.profilePicture || "/avatar.png"} />
               </div>
