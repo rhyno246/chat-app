@@ -80,6 +80,9 @@ export const useChatStore = create(
                     set({ messages: messages });
                     toast.error(error.response?.data?.message || "Something went wrong");
                 }
+            },
+            subscribeToMessages : () => {
+                
             }
         }),
         {
